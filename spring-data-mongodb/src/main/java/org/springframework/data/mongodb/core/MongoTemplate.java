@@ -2133,7 +2133,6 @@ public class MongoTemplate implements MongoOperations, ApplicationContextAware, 
 		}
 	}
 
-	@Override
 	public PersistenceExceptionTranslator getExceptionTranslator() {
 		return exceptionTranslator;
 	}
@@ -2401,7 +2400,7 @@ public class MongoTemplate implements MongoOperations, ApplicationContextAware, 
 	 * @author Thomas Darimont
 	 */
 
-	static interface DbObjectCallback<T> {
+	interface DbObjectCallback<T> {
 
 		T doWith(Document object);
 	}
