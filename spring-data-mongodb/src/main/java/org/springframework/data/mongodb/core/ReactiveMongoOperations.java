@@ -36,11 +36,11 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * Interface that specifies a basic set of MongoDB operations executed in a reactive way. Implemented by
- * {@link ReactiveMongoTemplate}. Not often used but a useful option for extensibility and testability (as it can be
- * easily mocked, stubbed, or be the target of a JDK proxy). Command execution using {@link ReactiveMongoOperations} is
- * deffered until subscriber subscribes to the {@link Publisher}. TODO: PersistenceException log/ignore/exception,
- * return inserted objects of insert methods, geo, aggregation
+ * Interface that specifies a basic set of MongoDB operations executed in a reactive way.
+ * <p>
+ * Implemented by {@link ReactiveMongoTemplate}. Not often used but a useful option for extensibility and testability
+ * (as it can be easily mocked, stubbed, or be the target of a JDK proxy). Command execution using
+ * {@link ReactiveMongoOperations} is deferred until subscriber subscribes to the {@link Publisher}.
  *
  * @author Mark Paluch
  * @see Flux
@@ -587,7 +587,7 @@ public interface ReactiveMongoOperations {
 	 * @param entityClass class that determines the collection to use
 	 * @return
 	 */
-	Mono<Void> insert(Publisher<? extends Object> batchToSave, Class<?> entityClass);
+	<T> Flux<T> insert(Publisher<? extends T> batchToSave, Class<?> entityClass);
 
 	/**
 	 * Insert a list of objects into the specified collection in a single batch write to the database.
@@ -596,7 +596,7 @@ public interface ReactiveMongoOperations {
 	 * @param collectionName name of the collection to store the object in
 	 * @return
 	 */
-	Mono<Void> insert(Publisher<? extends Object> batchToSave, String collectionName);
+	<T> Flux<T> insert(Publisher<? extends T> batchToSave, String collectionName);
 
 	/**
 	 * Insert a mixed Collection of objects into a database collection determining the collection name to use based on the

@@ -161,6 +161,7 @@ public class ReactiveMongoTemplate implements ReactiveMongoOperations, Applicati
 	private final QueryMapper queryMapper;
 	private final UpdateMapper updateMapper;
 
+	private int publisherBatchSize = 10;
 	private WriteConcern writeConcern;
 	private WriteConcernResolver writeConcernResolver = DefaultWriteConcernResolver.INSTANCE;
 	private WriteResultChecking writeResultChecking = WriteResultChecking.NONE;
@@ -255,6 +256,15 @@ public class ReactiveMongoTemplate implements ReactiveMongoOperations, Applicati
 	 */
 	public void setReadPreference(ReadPreference readPreference) {
 		this.readPreference = readPreference;
+	}
+
+	/**
+	 * Used to set a batch size when working with batches of {@link Publisher} emitting items to insert.
+	 *
+	 * @param publisherBatchSize batch size
+	 */
+	public void setPublisherBatchSize(int publisherBatchSize) {
+		this.publisherBatchSize = publisherBatchSize;
 	}
 
 	/*
@@ -722,7 +732,7 @@ public class ReactiveMongoTemplate implements ReactiveMongoOperations, Applicati
 	 * @see org.springframework.data.mongodb.core.ReactiveMongoOperations#insert(org.reactivestreams.Publisher, java.lang.Class)
 	 */
 	@Override
-	public Mono<Void> insert(Publisher<? extends Object> batchToSave, Class<?> entityClass) {
+	public <T> Flux<T> insert(Publisher<? extends T> batchToSave, Class<?> entityClass) {
 		return insert(batchToSave, determineCollectionName(entityClass));
 	}
 
@@ -730,8 +740,8 @@ public class ReactiveMongoTemplate implements ReactiveMongoOperations, Applicati
 	 * @see org.springframework.data.mongodb.core.ReactiveMongoOperations#insert(org.reactivestreams.Publisher, java.lang.String)
 	 */
 	@Override
-	public Mono<Void> insert(Publisher<? extends Object> batchToSave, String collectionName) {
-		return null;
+	public <T> Flux<T> insert(Publisher<? extends T> batchToSave, String collectionName) {
+		return Flux.from(batchToSave).buffer(publisherBatchSize).flatMap(collection -> insert(collection, collectionName));
 	}
 
 	/* (non-Javadoc)
@@ -801,7 +811,7 @@ public class ReactiveMongoTemplate implements ReactiveMongoOperations, Applicati
 	 */
 	@Override
 	public <T> Flux<T> insertAll(Publisher<? extends T> objectsToSave) {
-		return null;
+		return Flux.from(objectsToSave).buffer(publisherBatchSize).flatMap(this::insertAll);
 	}
 
 	protected <T> Flux<T> doInsertAll(Collection<? extends T> listToSave, MongoWriter<Object> writer) {

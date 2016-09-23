@@ -368,6 +368,77 @@ public class ReactiveMongoTemplateTests {
 	 * @see DATAMONGO-1444
 	 */
 	@Test
+	public void updateFirstByEntityTypeShouldUpdateObject() throws Exception {
+
+		Person person = new Person("Oliver2", 25);
+		template.insert(person) //
+				.then(template.updateFirst(new Query(Criteria.where("age").is(25)), new Update().set("firstName", "Sven"),
+						Person.class)) //
+				.flatMap(p -> template.find(new Query(Criteria.where("age").is(25)), Person.class))
+				.subscribeWith(TestSubscriber.create()) //
+				.await() //
+				.assertValuesWith(result -> {
+					assertThat(result.getFirstName(), is(equalTo("Sven")));
+				});
+	}
+
+	/**
+	 * @see DATAMONGO-1444
+	 */
+	@Test
+	public void updateFirstByCollectionNameShouldUpdateObjects() throws Exception {
+
+		Person person = new Person("Oliver2", 25);
+		template.insert(person, "people") //
+				.then(template.updateFirst(new Query(Criteria.where("age").is(25)), new Update().set("firstName", "Sven"),
+						"people")) //
+				.flatMap(p -> template.find(new Query(Criteria.where("age").is(25)), Person.class, "people"))
+				.subscribeWith(TestSubscriber.create()) //
+				.await() //
+				.assertValuesWith(result -> {
+					assertThat(result.getFirstName(), is(equalTo("Sven")));
+				});
+	}
+
+	/**
+	 * @see DATAMONGO-1444
+	 */
+	@Test
+	public void updateMultiByEntityTypeShouldUpdateObjects() throws Exception {
+
+		Query query = new Query(new Criteria().orOperator(Criteria.where("firstName").is("Walter Jr"),
+				Criteria.where("firstName").is("Walter")));
+
+		template.insertAll(Flux.just(new Person("Walter", 50), new Person("Skyler", 43), new Person("Walter Jr", 16))) //
+				.collectList() //
+				.flatMap(a -> template.updateMulti(query, new Update().set("firstName", "Walt"), Person.class)) //
+				.flatMap(p -> template.find(new Query(Criteria.where("firstName").is("Walt")), Person.class)) //
+				.subscribeWith(TestSubscriber.create()) //
+				.awaitAndAssertNextValueCount(2);
+	}
+
+	/**
+	 * @see DATAMONGO-1444
+	 */
+	@Test
+	public void updateMultiByCollectionNameShouldUpdateObject() throws Exception {
+
+		Query query = new Query(new Criteria().orOperator(Criteria.where("firstName").is("Walter Jr"),
+				Criteria.where("firstName").is("Walter")));
+
+		template
+				.insert(Flux.just(new Person("Walter", 50), new Person("Skyler", 43), new Person("Walter Jr", 16)), "people") //
+				.collectList() //
+				.flatMap(a -> template.updateMulti(query, new Update().set("firstName", "Walt"), Person.class, "people")) //
+				.flatMap(p -> template.find(new Query(Criteria.where("firstName").is("Walt")), Person.class, "people")) //
+				.subscribeWith(TestSubscriber.create()) //
+				.awaitAndAssertNextValueCount(2);
+	}
+
+	/**
+	 * @see DATAMONGO-1444
+	 */
+	@Test
 	public void throwsExceptionForDuplicateIds() {
 
 		ReactiveMongoTemplate template = new ReactiveMongoTemplate(factory);
