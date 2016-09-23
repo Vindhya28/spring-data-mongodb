@@ -1236,19 +1236,9 @@ public class MongoTemplate implements MongoOperations, ApplicationContextAware, 
 				UpdateOptions opts = new UpdateOptions();
 				opts.upsert(upsert);
 
-				// TODO hack - split up update and replaces
-				boolean useUpdate = false;
-
-				for (String s : updateObj.keySet()) {
-					if (s.startsWith("$")) {
-						useUpdate = true;
-						break;
-					}
-				}
-
 				collection = writeConcernToUse != null ? collection.withWriteConcern(writeConcernToUse) : collection;
 
-				if (!useUpdate) {
+				if (!UpdateMapper.isUpdateObject(updateObj)) {
 					return collection.replaceOne(queryObj, updateObj, opts);
 				} else {
 					if (multi) {

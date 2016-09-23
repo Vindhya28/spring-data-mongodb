@@ -1151,17 +1151,7 @@ public class ReactiveMongoTemplate implements ReactiveMongoOperations, Applicati
 
 			UpdateOptions updateOptions = new UpdateOptions().upsert(upsert);
 
-			// TODO hack - split up update and replaces
-			boolean useUpdate = false;
-
-			for (String s : updateObj.keySet()) {
-				if (s.startsWith("$")) {
-					useUpdate = true;
-					break;
-				}
-			}
-
-			if (!useUpdate) {
+			if (!UpdateMapper.isUpdateObject(updateObj)) {
 				return collectionToUse.replaceOne(queryObj, updateObj, updateOptions);
 			}
 			if (multi) {
